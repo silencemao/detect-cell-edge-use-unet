@@ -17,6 +17,9 @@ if u want to show the result of unet, u can run **test_predict.py**
 
 
 
+
+**if u use windows, the '/' in the path shoud be replaced with '\\'**
+
 if u have any question please issue, thank u.
 
 email: silencekxm@gmail.com ponder_1_kxm@163.com
