@@ -117,50 +117,57 @@ class myAugmentation(object):
                 cv2.imwrite(path_label + "/" + str(i) + "/" + midname + "_label" + "." + self.img_type, img_label)
 
 class dataProcess(object):
-    def __init__(self, out_rows, out_cols, data_path="../deform/train", label_path="../deform/label",
-                 test_path="../deform/test", npy_path="../deform/npydata", img_type="tif"):
-
-        """
-
-        """
-
+    def __init__(self, out_rows, out_cols, aug_merge_path="../deform/aug_merge", aug_train_path="../deform/aug_train",
+                 aug_label_path="../deform/aug_label", test_path = '../deform/test', npy_path="../deform/npydata",
+                 img_type="tif"):
         self.out_rows = out_rows
         self.out_cols = out_cols
-        self.data_path = data_path
-        self.label_path = label_path
-        self.img_type = img_type
+        self.aug_merge_path = aug_merge_path
+        self.aug_train_path = aug_train_path
+        self.aug_label_path = aug_label_path
         self.test_path = test_path
         self.npy_path = npy_path
+        self.img_type = img_type
 
     def create_train_data(self):
-        # 将训练集和label(没有增强的数据)分别生成npy格式, 训练集是分离之后的图像
+        # 将增强之后的训练集生成npy         
         i = 0
         print('-' * 30)
-        print('Creating training images...')
+        print('creating train image')
         print('-' * 30)
-        imgs = glob.glob(self.data_path + "/*." + self.img_type)           # deform/train
-        print(len(imgs))
-        imgdatas = np.ndarray((len(imgs), self.out_rows, self.out_cols, 1), dtype=np.uint8)
-        imglabels = np.ndarray((len(imgs), self.out_rows, self.out_cols, 1), dtype=np.uint8)
-        for imgname in imgs:
-            midname = imgname[imgname.rindex("/") + 1:]   # 图像的名字
-            img = load_img(self.data_path + "/" + midname, grayscale=True)   # 转换为灰度图
-            label = load_img(self.label_path + "/" + midname, grayscale=True)
-            img = img_to_array(img)
-            label = img_to_array(label)
-            imgdatas[i] = img
-            imglabels[i] = label
-            if i % 100 == 0:
-                print('Done: {0}/{1} images'.format(i, len(imgs)))
-            i += 1
+        count = 0
+        for indir in os.listdir(self.aug_merge_path):
+            path = os.path.join(self.aug_merge_path, indir)
+            count += len(os.listdir(path))
+        imgdatas = np.ndarray((count, self.out_rows, self.out_cols, 1), dtype=np.uint8)
+        imglabels = np.ndarray((count, self.out_rows, self.out_cols, 1), dtype=np.uint8)
+        for indir in os.listdir(self.aug_merge_path):
+            trainPath = os.path.join(self.aug_train_path, indir)
+            labelPath = os.path.join(self.aug_label_path, indir)
+            print(trainPath, labelPath)
+            imgs = glob.glob(trainPath + '/*' + '.tif')
+            for imgname in imgs:
+                trainmidname = imgname[imgname.rindex('/') + 1:]
+                labelimgname = imgname[imgname.rindex('/') + 1:imgname.rindex('_')] + '_label.tif'
+                print(trainmidname, labelimgname)
+                img = load_img(trainPath + '/' + trainmidname, grayscale=True)
+                label = load_img(labelPath + '/' + labelimgname, grayscale=True)
+                img = img_to_array(img)
+                label = img_to_array(label)
+                imgdatas[i] = img
+                imglabels[i] = label
+                if i % 100 == 0:
+                    print('Done: {0}/{1} images'.format(i, len(imgs)))
+                i += 1
+                print(i)
         print('loading done', imgdatas.shape)
-        np.save(self.npy_path + '/imgs_train.npy', imgdatas)            # 将30张训练集和30张label生成npy数据
-        np.save(self.npy_path + '/imgs_mask_train.npy', imglabels)
+        np.save(self.npy_path + '/augimgs_train.npy', imgdatas)            # 将30张训练集和30张label生成npy数据
+        np.save(self.npy_path + '/augimgs_mask_train.npy', imglabels)
         print('Saving to .npy files done.')
-
+        
     def create_test_data(self):
 
-        # 将训练集和label(没有增强的)分别生成npy格式, 训练集是分离之后的图像
+        # 测试集生成npy
         i = 0
         print('-' * 30)
         print('Creating training images...')
